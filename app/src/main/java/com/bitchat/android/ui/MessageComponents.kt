@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -118,36 +119,44 @@ fun MessageItem(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val timeFormatter = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
-    
+    val isSelf = message.senderPeerID == meshService.myPeerID ||
+                 message.sender == currentUserNickname ||
+                 message.sender.startsWith("$currentUserNickname#")
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            horizontalArrangement = if (isSelf) Arrangement.End else Arrangement.Start,
+            verticalAlignment = Alignment.Bottom
         ) {
-            // Create a custom layout that combines selectable text with clickable nickname areas
-            MessageTextWithClickableNicknames(
-                message = message,
-                currentUserNickname = currentUserNickname,
-                meshService = meshService,
-                colorScheme = colorScheme,
-                timeFormatter = timeFormatter,
-                onNicknameClick = onNicknameClick,
-                onMessageLongPress = onMessageLongPress,
-                modifier = Modifier.weight(1f)
-            )
-            
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = if (isSelf) Color(0xFFE7FFDB) else Color.White,
+                tonalElevation = 1.dp
+            ) {
+                MessageTextWithClickableNicknames(
+                    message = message,
+                    currentUserNickname = currentUserNickname,
+                    meshService = meshService,
+                    colorScheme = colorScheme,
+                    timeFormatter = timeFormatter,
+                    onNicknameClick = onNicknameClick,
+                    onMessageLongPress = onMessageLongPress,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
             // Delivery status for private messages
-            if (message.isPrivate && message.sender == currentUserNickname) {
+            if (message.isPrivate && isSelf) {
                 message.deliveryStatus?.let { status ->
-                    DeliveryStatusIcon(status = status)
+                    DeliveryStatusIcon(status = status, modifier = Modifier.padding(start = 4.dp, bottom = 2.dp))
                 }
             }
         }
-        
+
         // Link preview pills for URLs in message content
         if (message.sender != "system") {
             val urls = URLDetector.extractUrls(message.content)
@@ -259,12 +268,13 @@ private fun MessageTextWithClickableNicknames(
 }
 
 @Composable
-fun DeliveryStatusIcon(status: DeliveryStatus) {
+fun DeliveryStatusIcon(status: DeliveryStatus, modifier: Modifier = Modifier) {
     val colorScheme = MaterialTheme.colorScheme
-    
+
     when (status) {
         is DeliveryStatus.Sending -> {
             Text(
+                modifier = modifier,
                 text = "○",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
@@ -273,6 +283,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         is DeliveryStatus.Sent -> {
             // Use a subtle hollow marker for Sent; single check is reserved for Delivered (iOS parity)
             Text(
+                modifier = modifier,
                 text = "○",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
@@ -281,6 +292,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         is DeliveryStatus.Delivered -> {
             // Single check for Delivered (matches iOS expectations)
             Text(
+                modifier = modifier,
                 text = "✓",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.8f)
@@ -288,6 +300,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.Read -> {
             Text(
+                modifier = modifier,
                 text = "✓✓",
                 fontSize = 10.sp,
                 color = Color(0xFF007AFF), // Blue
@@ -296,6 +309,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.Failed -> {
             Text(
+                modifier = modifier,
                 text = "⚠",
                 fontSize = 10.sp,
                 color = Color.Red.copy(alpha = 0.8f)
@@ -303,6 +317,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.PartiallyDelivered -> {
             Text(
+                modifier = modifier,
                 text = "✓${status.reached}/${status.total}",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
