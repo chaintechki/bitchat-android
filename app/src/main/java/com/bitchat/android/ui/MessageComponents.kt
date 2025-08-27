@@ -268,12 +268,13 @@ private fun MessageTextWithClickableNicknames(
 }
 
 @Composable
-fun DeliveryStatusIcon(status: DeliveryStatus) {
+fun DeliveryStatusIcon(status: DeliveryStatus, modifier: Modifier = Modifier) {
     val colorScheme = MaterialTheme.colorScheme
-    
+
     when (status) {
         is DeliveryStatus.Sending -> {
             Text(
+                modifier = modifier,
                 text = "○",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
@@ -282,6 +283,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         is DeliveryStatus.Sent -> {
             // Use a subtle hollow marker for Sent; single check is reserved for Delivered (iOS parity)
             Text(
+                modifier = modifier,
                 text = "○",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
@@ -290,6 +292,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         is DeliveryStatus.Delivered -> {
             // Single check for Delivered (matches iOS expectations)
             Text(
+                modifier = modifier,
                 text = "✓",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.8f)
@@ -297,6 +300,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.Read -> {
             Text(
+                modifier = modifier,
                 text = "✓✓",
                 fontSize = 10.sp,
                 color = Color(0xFF007AFF), // Blue
@@ -305,6 +309,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.Failed -> {
             Text(
+                modifier = modifier,
                 text = "⚠",
                 fontSize = 10.sp,
                 color = Color.Red.copy(alpha = 0.8f)
@@ -312,6 +317,7 @@ fun DeliveryStatusIcon(status: DeliveryStatus) {
         }
         is DeliveryStatus.PartiallyDelivered -> {
             Text(
+                modifier = modifier,
                 text = "✓${status.reached}/${status.total}",
                 fontSize = 10.sp,
                 color = colorScheme.primary.copy(alpha = 0.6f)
