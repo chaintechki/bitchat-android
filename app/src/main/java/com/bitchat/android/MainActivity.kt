@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.location.Location
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.Lifecycle
 import com.bitchat.android.mesh.BluetoothMeshService
+import com.bitchat.android.services.BluetoothRelayLocator
 import com.bitchat.android.onboarding.BluetoothCheckScreen
 import com.bitchat.android.onboarding.BluetoothStatus
 import com.bitchat.android.onboarding.BluetoothStatusManager
@@ -52,9 +54,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var bluetoothStatusManager: BluetoothStatusManager
     private lateinit var locationStatusManager: LocationStatusManager
     private lateinit var batteryOptimizationManager: BatteryOptimizationManager
-    
+
     // Core mesh service - managed at app level
     private lateinit var meshService: BluetoothMeshService
+    private lateinit var relayLocator: BluetoothRelayLocator
     private val mainViewModel: MainViewModel by viewModels()
     private val chatViewModel: ChatViewModel by viewModels { 
         object : ViewModelProvider.Factory {
@@ -78,6 +81,15 @@ class MainActivity : ComponentActivity() {
         permissionManager = PermissionManager(this)
         // Initialize core mesh service first
         meshService = BluetoothMeshService(this)
+        relayLocator = BluetoothRelayLocator(this).apply {
+            // Placeholder relay coordinates - replace with real devices
+            registerRelay(BluetoothRelayLocator.Relay("00:11:22:33:44:55", 37.7749, -122.4194))
+            registerRelay(BluetoothRelayLocator.Relay("66:77:88:99:AA:BB", 37.7750, -122.4183))
+            registerRelay(BluetoothRelayLocator.Relay("CC:DD:EE:FF:00:11", 37.7755, -122.4190))
+            addLocationListener { location: Location ->
+                Log.d("MainActivity", "Relay-based location: ${location.latitude}, ${location.longitude}")
+            }
+        }
         bluetoothStatusManager = BluetoothStatusManager(
             activity = this,
             context = this,
@@ -602,6 +614,7 @@ class MainActivity : ComponentActivity() {
                 // Set up mesh service delegate and start services
                 meshService.delegate = chatViewModel
                 meshService.startServices()
+                relayLocator.startScanning()
                 
                 Log.d("MainActivity", "Mesh service started successfully")
                 
@@ -746,5 +759,6 @@ class MainActivity : ComponentActivity() {
                 Log.w("MainActivity", "Error stopping mesh services in onDestroy: ${e.message}")
             }
         }
+        relayLocator.stopScanning()
     }
 }
